@@ -7,7 +7,6 @@ import urllib.parse
 import logging
 import traceback
 import time
-from starlette.responses import JSONResponse
 
 # Configure logging
 logging.basicConfig(
@@ -20,6 +19,15 @@ logger = logging.getLogger('linkedin_api_tools')
 mcp = FastMCP("LinkedInProfiler", stateless_http=True)
 app = mcp.http_app(path="/linkedin")
 
+# Add root-level endpoints for health checks
+@app.get("/")
+async def root():
+    return {"status": "ok", "service": "LinkedIn MCP Server", "mcp_path": "/linkedin"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": time.time(), "api_configured": bool(LINKEDIN_API_KEY)}
+
 # API config from environment
 LINKEDIN_API_KEY = os.environ.get("LINKEDIN_API_KEY")
 LINKEDIN_API_HOST = "linkedin-bulk-data-scraper.p.rapidapi.com"
@@ -28,10 +36,6 @@ LINKEDIN_API_USER = os.environ.get("LINKEDIN_API_USER", "usama")
 if not LINKEDIN_API_KEY:
     logger.error("Missing LINKEDIN_API_KEY environment variable")
     raise RuntimeError("LINKEDIN_API_KEY is required")
-
-@app.route("/", methods=["GET"])
-async def alive(request):
-    return JSONResponse({"status": "ok"})
 
 # LinkedIn API headers
 def get_linkedin_headers() -> Dict:
