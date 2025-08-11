@@ -18,8 +18,8 @@ COPY . .
 
 
 # Azure passes the port in $PORT (80 or 8080).  Default to 80 locally.
-ENV PORT=80
-EXPOSE 80
+ENV PORT=8080
+EXPOSE 8080
 
 # Start Uvicorn against that FastAPI instance
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--proxy-headers"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers"]
