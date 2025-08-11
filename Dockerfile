@@ -22,4 +22,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Start Uvicorn against that FastAPI instance
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers"]
+CMD ["python", "main.py"]
