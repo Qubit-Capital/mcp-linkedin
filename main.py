@@ -31,7 +31,7 @@ LINKEDIN_API_USER = "usama"
 
 # Context variable to store the current request's API key
 # This allows us to access the API key from anywhere without passing the request object
-current_api_key = ContextVar('current_api_key', default=None)
+current_api_key = ContextVar('current_api_key', default=os.environ.get("LINKEDIN_API_KEY"))
 
 # Helper function to get API key from request
 def get_api_key(request: Request) -> str:
