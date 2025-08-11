@@ -29,96 +29,26 @@ DEFAULT_API_KEY = os.environ.get("LINKEDIN_API_KEY", "xxxx")
 LINKEDIN_API_HOST = "linkedin-bulk-data-scraper.p.rapidapi.com"
 LINKEDIN_API_USER = "usama"
 
-# Context variable to store the current request's API key
-# This allows us to access the API key from anywhere without passing the request object
-current_api_key = ContextVar('current_api_key', default=os.environ.get("LINKEDIN_API_KEY"))
+# Default API key from environment (must be set)
+LINKEDIN_API_KEY = os.environ.get("LINKEDIN_API_KEY")
+if not LINKEDIN_API_KEY:
+    raise RuntimeError("LINKEDIN_API_KEY environment variable is not set")
 
-# Helper function to get API key from request
-def get_api_key(request: Request) -> str:
-    """
-    Return the LinkedIn API key for this specific request
-    (header → query param → default from env).
-    """
-    # Check for API key in headers with multiple possible header names
-    api_key = request.headers.get("x-rapidapi-key") or request.headers.get("x-linkedin-api-key")
-    
-    # Check query parameters if header not found
-    if not api_key:
-        api_key = request.query_params.get("api_key")
-    
-    # Check for API key in Authorization: Basic header (username holds the key)
-    if not api_key:
-        auth_header = request.headers.get("authorization")
-        if auth_header and auth_header.lower().startswith("basic "):
-            import base64
-            try:
-                decoded = base64.b64decode(auth_header.split(" ",1)[1]).decode()
-                # decoded format is username:password (password may be empty)
-                api_key = decoded.split(":",1)[0]
-            except Exception as e:
-                logger.warning(f"Failed to decode Authorization header: {e}")
-    
-    # Fall back to default key if none provided
-    if not api_key:
-        api_key = DEFAULT_API_KEY
-        if api_key == "xxxx":
-            logger.warning("No API key supplied and no default key configured")
-            raise HTTPException(status_code=401, detail="API key required")
-    
-    return api_key
+# LinkedIn API headers
+def get_linkedin_headers() -> Dict:
+    return {
+        "Content-Type": "application/json",
+        "x-rapidapi-host": LINKEDIN_API_HOST,
+        "x-rapidapi-key": LINKEDIN_API_KEY,
+        "x-rapidapi-user": LINKEDIN_API_USER
+    }
 
-# Middleware to store API key in context variable
-class RequireAPIKeyMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        # Log all incoming headers for debugging (excluding sensitive info)
-        sanitized_headers = {k: v for k, v in dict(request.headers).items() 
-                           if k.lower() not in ['x-rapidapi-key', 'x-linkedin-api-key', 'authorization']}
-        logger.info(f"Incoming request headers: {sanitized_headers}")
-        
-        try:
-            # Get API key from request
-            api_key = get_api_key(request)
-            
-            # Store it in the context variable for this request
-            token = current_api_key.set(api_key)
-            
-            # Log (partial) key for debugging
-            if len(api_key) > 10:
-                logger.info(f"Using API key: {api_key[:5]}...{api_key[-5:]}")
-            else:
-                logger.info(f"Using API key: {api_key}")
-                
-            try:
-                # Continue with the request
-                response = await call_next(request)
-                return response
-            finally:
-                # Reset the context variable when done
-                current_api_key.reset(token)
-            
-        except HTTPException as e:
-            # Return error response if API key validation fails
-            return JSONResponse(
-                {"error": e.detail},
-                status_code=e.status_code
-            )
-
-# Register the middleware
-app.add_middleware(RequireAPIKeyMiddleware)
 
 @app.route("/", methods=["GET"])
 async def alive(request):
     return JSONResponse({"status": "ok"})
 
-# LinkedIn API headers
-def get_linkedin_headers() -> Dict:
-    api_key = current_api_key.get()
-    return {
-        "Content-Type": "application/json",
-        "x-rapidapi-host": LINKEDIN_API_HOST,
-        "x-rapidapi-key": api_key,
-        "x-rapidapi-user": LINKEDIN_API_USER
-    }
+
 
 # Helper function for making API requests with error handling
 def make_api_request(method: str, endpoint: str, payload: Optional[str] = None, headers: Dict = None) -> Dict[str, Any]:
@@ -1314,4 +1244,4 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app,
                 host="0.0.0.0",
-                port=int(os.getenv("PORT", 80)))
+                port=int(os.getenv("PORT", 8080)))
