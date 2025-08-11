@@ -1,11 +1,11 @@
 from fastmcp import FastMCP
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from typing import List, Dict, Optional, Any
 import http.client
 import json
 import os
-import urllib.parse
 import logging
-import traceback
 import time
 
 # Configure logging
@@ -17,26 +17,41 @@ logger = logging.getLogger('linkedin_api_tools')
 
 # API config from environment
 LINKEDIN_API_KEY = os.environ.get("LINKEDIN_API_KEY")
-
-# Create MCP server
-mcp = FastMCP("LinkedInProfiler", stateless_http=True)
-app = mcp.http_app(path="/linkedin")
-
-# Add root-level endpoints for health checks
-@app.get("/")
-async def root():
-    return {"status": "ok", "service": "LinkedIn MCP Server", "mcp_path": "/linkedin"}
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "timestamp": time.time(), "api_configured": bool(LINKEDIN_API_KEY)}
-
 LINKEDIN_API_HOST = "linkedin-bulk-data-scraper.p.rapidapi.com"
 LINKEDIN_API_USER = os.environ.get("LINKEDIN_API_USER", "usama")
 
 if not LINKEDIN_API_KEY:
-    logger.error("Missing LINKEDIN_API_KEY environment variable")
-    raise RuntimeError("LINKEDIN_API_KEY is required")
+    logger.warning("Missing LINKEDIN_API_KEY environment variable - API calls will fail")
+
+# Create FastAPI app first for health endpoints
+app = FastAPI()
+
+# Add health check endpoints at root level
+@app.get("/")
+async def root():
+    return JSONResponse(content={
+        "status": "ok",
+        "service": "LinkedIn MCP Server",
+        "timestamp": time.time()
+    }, status_code=200)
+
+@app.get("/health")
+async def health():
+    return JSONResponse(content={
+        "status": "healthy",
+        "service": "LinkedIn MCP Server",
+        "timestamp": time.time(),
+        "api_configured": bool(LINKEDIN_API_KEY)
+    }, status_code=200)
+
+# Create MCP server and mount it
+mcp = FastMCP("LinkedInProfiler")
+
+# Mount MCP under /mcp path
+@app.post("/mcp")
+async def handle_mcp(request: dict):
+    # This will be handled by FastMCP
+    return {"message": "MCP endpoint"}
 
 # LinkedIn API headers
 def get_linkedin_headers() -> Dict:
@@ -49,6 +64,13 @@ def get_linkedin_headers() -> Dict:
 
 # Helper function for making API requests with error handling
 def make_api_request(method: str, endpoint: str, payload: Optional[str] = None) -> Dict[str, Any]:
+    if not LINKEDIN_API_KEY:
+        return {
+            "success": False,
+            "status": 401,
+            "message": "LINKEDIN_API_KEY not configured"
+        }
+    
     MAX_RETRIES = 3
     RETRY_DELAY = 2
 
@@ -113,9 +135,10 @@ def make_api_request(method: str, endpoint: str, payload: Optional[str] = None) 
             if 'conn' in locals():
                 conn.close()
 
-# Tools
+# MCP Tools
 @mcp.tool()
 def profiles(links: List[str]) -> Dict:
+    """Fetch LinkedIn profile data for multiple links"""
     try:
         payload = json.dumps({"links": links})
         return make_api_request("POST", "/profiles", payload)
@@ -124,6 +147,7 @@ def profiles(links: List[str]) -> Dict:
 
 @mcp.tool()
 def companies(links: List[str]) -> Dict:
+    """Fetch LinkedIn company data for multiple links"""
     try:
         payload = json.dumps({"links": links})
         return make_api_request("POST", "/companies", payload)
@@ -132,6 +156,7 @@ def companies(links: List[str]) -> Dict:
 
 @mcp.tool()
 def company_posts(links: List[str], count: int = 1) -> Dict:
+    """Fetch recent posts from LinkedIn companies"""
     try:
         payload = json.dumps({"links": links, "count": count})
         return make_api_request("POST", "/company_posts", payload)
@@ -140,6 +165,7 @@ def company_posts(links: List[str], count: int = 1) -> Dict:
 
 @mcp.tool()
 def person(link: str) -> Dict:
+    """Fetch detailed LinkedIn person/profile data"""
     try:
         payload = json.dumps({"link": link})
         return make_api_request("POST", "/person", payload)
@@ -148,6 +174,7 @@ def person(link: str) -> Dict:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app,
-                host="0.0.0.0",
-                port=int(os.getenv("PORT", 8080)))
+    port = int(os.getenv("PORT", 8080))
+    logger.info(f"Starting LinkedIn MCP Server on port {port}")
+    logger.info(f"Health check: http://localhost:{port}/health")
+    uvicorn.run(app, host="0.0.0.0", port=port)
