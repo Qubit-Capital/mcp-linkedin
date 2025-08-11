@@ -1,25 +1,18 @@
-# Build-time stage
-FROM python:3.12-slim AS base
-
-# Helpful defaults
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+# Use a lightweight Python base image
+FROM python:3.11-alpine
 
 WORKDIR /app
 
-# Install Python deps first (layer caching)
-COPY pyproject.toml .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir .
 
+# Copy Python dependency files and install
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the actual source
+# Copy source code
 COPY . .
 
-
-# Azure passes the port in $PORT (80 or 8080).  Default to 80 locally.
-ENV PORT=8080
+# Expose HTTP port
 EXPOSE 8080
 
-# Start Uvicorn against that FastAPI instance
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers"]
+# Start the MCP server
+CMD ["python", "main.py"]

@@ -15,6 +15,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger('linkedin_api_tools')
 
+# API config from environment
+LINKEDIN_API_KEY = os.environ.get("LINKEDIN_API_KEY")
+
 # Create MCP server
 mcp = FastMCP("LinkedInProfiler", stateless_http=True)
 app = mcp.http_app(path="/linkedin")
@@ -28,8 +31,6 @@ async def root():
 async def health_check():
     return {"status": "healthy", "timestamp": time.time(), "api_configured": bool(LINKEDIN_API_KEY)}
 
-# API config from environment
-LINKEDIN_API_KEY = os.environ.get("LINKEDIN_API_KEY")
 LINKEDIN_API_HOST = "linkedin-bulk-data-scraper.p.rapidapi.com"
 LINKEDIN_API_USER = os.environ.get("LINKEDIN_API_USER", "usama")
 
