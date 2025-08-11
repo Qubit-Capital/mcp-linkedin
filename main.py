@@ -140,3 +140,9 @@ def person(link: str) -> Dict:
         return make_api_request("POST", "/person", payload)
     except Exception as e:
         return {"error": str(e), "exception_type": type(e).__name__}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app,
+                host="0.0.0.0",
+                port=int(os.getenv("PORT", 8080)))
