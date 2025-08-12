@@ -47,16 +47,16 @@ def get_api_key(request: Request) -> str:
         api_key = request.query_params.get("api_key")
     
     # Check for API key in Authorization: Basic header (username holds the key)
-    if not api_key:
-        auth_header = request.headers.get("authorization")
-        if auth_header and auth_header.lower().startswith("basic "):
-            import base64
-            try:
-                decoded = base64.b64decode(auth_header.split(" ",1)[1]).decode()
-                # decoded format is username:password (password may be empty)
-                api_key = decoded.split(":",1)[0]
-            except Exception as e:
-                logger.warning(f"Failed to decode Authorization header: {e}")
+    # if not api_key:
+    #     auth_header = request.headers.get("authorization")
+    #     if auth_header and auth_header.lower().startswith("basic "):
+    #         import base64
+    #         try:
+    #             decoded = base64.b64decode(auth_header.split(" ",1)[1]).decode()
+    #             # decoded format is username:password (password may be empty)
+    #             api_key = decoded.split(":",1)[0]
+    #         except Exception as e:
+    #             logger.warning(f"Failed to decode Authorization header: {e}")
     
     # Fall back to default key if none provided
     if not api_key:
