@@ -25,7 +25,7 @@ mcp = FastMCP("LinkedInProfiler", stateless_http=True)
 app = mcp.http_app(path="/mcp")
 
 # Default API key from environment (fallback to placeholder if not set)
-DEFAULT_API_KEY = os.environ.get("LINKEDIN_API_KEY", "xxxx")
+DEFAULT_API_KEY = os.environ.get("LINKEDIN_API_KEY", "77a6fc0100msh1c733da3a22af14p1c7ae9jsn7d29e4f07465")
 LINKEDIN_API_HOST = "linkedin-bulk-data-scraper.p.rapidapi.com"
 LINKEDIN_API_USER = "usama"
 
@@ -45,6 +45,9 @@ def get_api_key(request: Request) -> str:
     # Check query parameters if header not found
     if not api_key:
         api_key = request.query_params.get("api_key")
+    
+    if not api_key:
+        api_key = DEFAULT_API_KEY
     
     # Check for API key in Authorization: Basic header (username holds the key)
     if not api_key:
@@ -156,6 +159,7 @@ def make_api_request(method: str, endpoint: str, payload: Optional[str] = None, 
             # Set timeout to prevent hanging requests
             conn.timeout = 30
             
+            print(payload,headers,method,endpoint)
             # Make request
             conn.request(method, endpoint, payload, headers)
             
