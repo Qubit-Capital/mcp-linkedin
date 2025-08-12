@@ -169,7 +169,6 @@ def make_api_request(method: str, endpoint: str, payload: Optional[str] = None, 
             # Set timeout to prevent hanging requests
             conn.timeout = 30
             
-            print(payload,headers,method,endpoint)
             # Make request
             conn.request(method, endpoint, payload, headers)
             
