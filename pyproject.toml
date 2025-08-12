@@ -11,6 +11,7 @@ dependencies = [
     "fastapi>=0.111.0",    # outer shell app
     "uvicorn[standard]>=0.29.0",   # ASGI server used in the Docker CMD
     "httpx>=0.27.0",       # your tools call LinkedIn’s HTTP endpoints
+    "mcp-trace>=0.1.3"
 ]
 
 [project.optional-dependencies]
