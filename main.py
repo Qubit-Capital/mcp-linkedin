@@ -22,7 +22,7 @@ logger = logging.getLogger('linkedin_api_tools')
 # Create MCP server
 mcp = FastMCP("LinkedInProfiler", stateless_http=True)
 
-app = mcp.http_app(path="/linkedin")
+app = mcp.http_app(path="/mcp")
 
 # Default API key from environment (fallback to placeholder if not set)
 DEFAULT_API_KEY = os.environ.get("LINKEDIN_API_KEY", "xxxx")
