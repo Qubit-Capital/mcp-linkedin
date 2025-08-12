@@ -25,7 +25,7 @@ mcp = FastMCP("LinkedInProfiler", stateless_http=True)
 app = mcp.http_app(path="/mcp")
 
 # Default API key from environment (fallback to placeholder if not set)
-DEFAULT_API_KEY = os.environ.get("LINKEDIN_API_KEY", "77a6fc0100msh1c733da3a22af14p1c7ae9jsn7d29e4f07465")
+DEFAULT_API_KEY = os.environ.get("LINKEDIN_API_KEY", "xxxx")
 LINKEDIN_API_HOST = "linkedin-bulk-data-scraper.p.rapidapi.com"
 LINKEDIN_API_USER = "usama"
 
