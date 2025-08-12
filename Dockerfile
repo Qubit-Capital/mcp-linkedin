@@ -22,4 +22,4 @@ ENV PORT=80
 EXPOSE 80
 
 # Start Uvicorn against that FastAPI instance
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--proxy-headers"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers"]
