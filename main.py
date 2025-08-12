@@ -104,7 +104,7 @@ class RequireAPIKeyMiddleware(BaseHTTPMiddleware):
             )
 
 # Register the middleware
-app.add_middleware(RequireAPIKeyMiddleware)
+# app.add_middleware(RequireAPIKeyMiddleware)
 
 @app.route("/", methods=["GET"])
 async def alive(request):
