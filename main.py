@@ -11,6 +11,8 @@ from starlette.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import Request, HTTPException
 from contextvars import ContextVar
+from mcp_trace.middleware import TraceMiddleware
+from mcp_trace.adapters.contexaai_adapter import ContexaTraceAdapter
 
 # Configure logging
 logging.basicConfig(
@@ -19,8 +21,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger('linkedin_api_tools')
 
+contexa_adapter = ContexaTraceAdapter(
+    api_key=os.environ.get("CONTEXA_API_KEY") or "xxxx",
+    server_id=os.environ.get("CONTEXA_SERVER_ID") or "xxxx"
+)
+
 # Create MCP server
 mcp = FastMCP("LinkedInProfiler", stateless_http=True)
+mcp.add_middleware(TraceMiddleware(contexa_adapter))
 
 app = mcp.http_app(path="/mcp")
 
