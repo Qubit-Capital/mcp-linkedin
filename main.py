@@ -113,6 +113,8 @@ async def alive(request):
 # LinkedIn API headers
 def get_linkedin_headers() -> Dict:
     api_key = current_api_key.get()
+    if not api_key:
+        api_key=DEFAULT_API_KEY
     return {
         "Content-Type": "application/json",
         "x-rapidapi-host": LINKEDIN_API_HOST,
